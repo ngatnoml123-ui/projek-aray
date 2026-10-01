@@ -1,0 +1,109 @@
+import java.util.Scanner;
+
+public class PendakianSemeru {
+
+    /*
+     * Peta pendakian (6 baris x 12 kolom) -> Array 2 Dimensi
+     *   '.' = jalur hijau (boleh dilewati)
+     *   'X' = jalur merah (jurang/blank)
+     *   'P' = Puncak Mahameru
+     *   '1' = P1 (Pos Ranu Pane)      '2' = P2 (Pos Watu Rejeng)
+     *   '3' = P3 (Pos 3)              '4' = P4 (Pos 4)
+     *   '5' = P5 (Pos Kalimati)
+     *   'K' = RK (Pos Ranu Kumbolo)   'T' = TC (Tanjakan Cinta)
+     */
+    static final String[] DATA_PETA = {
+        "PXXXXXXXX...",
+        ".X...XX3X.X.",
+        ".XXX.4....X.",
+        ".T...X..XXX.",
+        "..X..X2XXXX.",
+        "5.XK.X.....1"
+    };
+
+    static final int BARIS = 6;
+    static final int KOLOM = 12;
+
+    static char[][] peta = new char[BARIS][KOLOM];
+
+    // Pos tempat istirahat: P1-P5, RK, TC
+    static boolean isPos(char c) {
+        return (c >= '1' && c <= '5') || c == 'K' || c == 'T';
+    }
+
+    public static void main(String[] args) {
+        // isi array 2D dari data peta
+        for (int i = 0; i < BARIS; i++) {
+            peta[i] = DATA_PETA[i].toCharArray();
+        }
+
+        Scanner in = new Scanner(System.in);
+        System.out.print("Tenaga : ");
+        int tenaga = Integer.parseInt(in.nextLine().trim());
+        System.out.print("Jalur  : ");
+        String jalur = in.nextLine().trim().replaceAll("[\"“”]", "").toUpperCase();
+        in.close();
+
+        System.out.println(cekPendakian(tenaga, jalur));
+    }
+
+    static String cekPendakian(int tenaga, String jalur) {
+        // posisi awal: P1 (baris 5, kolom 11)
+        int baris = 5;
+        int kolom = 11;
+        int energi = tenaga;
+        boolean tenagaKurang = false;
+
+        for (int i = 0; i < jalur.length(); i++) {
+            char langkah = jalur.charAt(i);
+
+            if (langkah == 'R') {
+                // istirahat: hanya boleh di pos, tenaga +10
+                if (!isPos(peta[baris][kolom])) {
+                    return "Mohon maaf, istirahat hanya diperbolehkan di Pos -pos yang tersedia";
+                }
+                energi += 10;
+            } else {
+                int brBaru = baris;
+                int klBaru = kolom;
+
+                if (langkah == 'L') {
+                    klBaru--;
+                } else if (langkah == 'U') {
+                    brBaru--;
+                } else if (langkah == 'D') {
+                    brBaru++;
+                } else {
+                    return "Perintah '" + langkah + "' tidak dikenal (gunakan L, R, U, D)";
+                }
+
+                // tidak ada tenaga untuk bergerak
+                if (energi <= 0) {
+                    tenagaKurang = true;
+                }
+                energi--; // setiap pergerakan mengurangi tenaga 1
+
+                // keluar peta atau masuk area merah -> jurang/blank
+                boolean diLuarPeta = brBaru < 0 || brBaru >= BARIS || klBaru < 0 || klBaru >= KOLOM;
+                if (diLuarPeta || peta[brBaru][klBaru] == 'X') {
+                    return "Jalur anda salah, anda masuk ke jurang/blank " + brBaru + (i + 1);
+                }
+
+                baris = brBaru;
+                kolom = klBaru;
+            }
+        }
+
+        // jalur benar semua, cek tenaga
+        if (tenagaKurang) {
+            return "Jalur anda benar, tapi tenaga anda tidak akan kuat, "
+                 + "coba jalur lain atau sempatkan istirahat terlebih dahulu";
+        }
+
+        if (peta[baris][kolom] == 'P') {
+            return "Selamat Pendakian anda berhasil mencapai Puncak Mahameru, sisa tenaga anda " + energi;
+        }
+
+        return "Jalur anda benar, tapi belum sampai di Puncak Mahameru, sisa tenaga anda " + energi;
+    }
+}
